@@ -567,22 +567,330 @@ float bill(float total_price){
 
 }
 
-int search(char user_in[20])
-{
-    FILE *fp;
-    stocks e;
-    int f = 0;
-    fp = fopen("records.dat", "r");
-    while(fread(&e, sizeof(e), 1, fp)==1){
-        if(strstr( e.name, user_in) != NULL){
-            f++;
-            printf("Product name : %s\n Product code: %s", e.name, e.code);
+// Chatbot function that encapsulates the interaction logic
+void chatbot(Product *products, int size) {
+    char input[100];
+    greet();
+    showHelp();
+    while (1) {
+        printf("\nYou: ");
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0; // Remove trailing newline
+        toLowerCase(input); // Convert input to lowercase
+        
+        if (strcmp(input, "exit") == 0) {
+            printf("Chatbot: Goodbye!\n");
+            break;
+        } else if (strcmp(input, "help") == 0) {
+            showHelp();
+        } else if (strcmp(input, "search") == 0) {
+            searchProduct(products, size);
+        } else if (strcmp(input, "faq") == 0) {
+            faq();
+        } else if (strcmp(input, "sortby price") == 0) {
+            sortProductsByPrice(products, size);
+        } else {
+            printf("Chatbot: I didn't understand that command. Type 'help' for assistance.\n");
         }
+        printf("Chatbot: Please enter your next command.\n");
     }
-    if(f == 0){
-        printf("no products matched.");
-    }
-
-    return f;
 }
 
+// Function to convert a string to lowercase
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+// Greet the user
+void greet() {
+    printf("Chatbot: Welcome to our e-commerce platform! How can I assist you today?\n");
+}
+
+// Show help commands
+void showHelp() {
+
+    printf("Chatbot: You can use the following commands:\n");
+    printf("  - help: Show this help message\n");
+    printf("  - search: Search for a product\n");
+    printf("  - faq: Get answers to frequently asked questions\n");
+    printf("  - sortby price: Sort products by price\n"); 
+    printf("  - exit: Exit the chat\n");
+}
+
+// Function to load products from a file
+int loadProducts(char *filename, Product* products) {
+    FILE *fptr;
+    fptr = fopen(filename,"r");
+    if (fptr==NULL){
+        printf("Error in loading the products\n");
+        exit(1);
+    }
+    int count = 0;
+    while(fscanf(fptr,"%s %d %s %f %d %s", products[count].name, &products[count].code, products[count].description, &products[count].price, &products[count].units, products[count].last_update)==6){
+        count +=1;
+        
+    }
+    fclose(fptr);
+    return count;
+    
+}
+
+// Function to search for products by substring
+void searchProduct(Product *products, int size) {
+    char productName[max_name];
+    printf("Chatbot: Enter the product name to search: ");
+    
+    // Read the input using fgets to handle spaces and newline
+    fgets(productName, sizeof(productName), stdin);
+    productName[strcspn(productName, "\n")] = '\0'; // Remove trailing newline
+    
+    toLowerCase(productName); // Convert productName to lowercase
+    
+    int found = 0;
+    for (int i = 0; i < size; i++) {
+        char lowerName[max_name];
+        strncpy(lowerName, products[i].name, max_name); // Safely copy product name
+        toLowerCase(lowerName); // Convert product name to lowercase for comparison
+        
+        // Check if the product name contains the search string
+        if (strstr(lowerName, productName) != NULL) {
+            if (!found) {
+                printf("Chatbot: Products found:\n");
+            }
+            
+            printf("Name: %s\n", products[i].name);
+            printf("Code: %d\n", products[i].code); // Corrected format specifier
+            printf("Description: %s\n", products[i].description);
+            printf("Price: %.2f\n", products[i].price);
+            printf("Units: %d\n", products[i].units);
+            printf("\n");
+            found = 1;
+        }
+    }
+    if (found == 0) {
+        printf("Chatbot: No products found containing '%s'.\n", productName);
+    }
+}
+
+// Function to display FAQs
+void faq() {
+    char question[256];
+    while (1) {
+        printf("Chatbot: What is your question about? (type 'exit faq' to stop)\n");
+        printf("You: ");
+        fgets(question, sizeof(question), stdin);
+        question[strcspn(question, "\n")] = 0; // Remove trailing newline
+        toLowerCase(question); // Convert question to lowercase
+        
+        if (strcmp(question, "exit faq") == 0) {
+            printf("Chatbot: Exiting FAQ section.\n");
+            break;
+        }
+
+        if (strstr(question, "create account") != NULL) {
+            printf("Chatbot: You can create an account by clicking on the 'Sign Up' button on the home page.\n");
+        } else if (strstr(question, "payment methods") != NULL) {
+            printf("Chatbot: We accept credit/debit cards, UPI and bank transfers.\n");
+        } else if (strstr(question, "track my order") != NULL) {
+            printf("Chatbot: You can track your order by logging into your account and visiting the 'Orders' section.\n");
+        } else if (strstr(question, "return policy") != NULL) {
+            printf("Chatbot: We offer a 30-day return policy for unused items in their original packaging.\n");
+        } else if (strstr(question, "reset my password") != NULL) {
+            printf("Chatbot: To reset your password, click on the 'Forgot Password' on the login page and follow the instructions.\n");
+        } else if (strstr(question, "shipping options") != NULL) {
+            printf("Chatbot: We offer various shipping options. Shipping costs and times vary depending on the option you choose.\n");
+        } else if (strstr(question, "cancel or modify my order") != NULL) {
+            printf("Chatbot: Yes, you can cancel or modify your order within 24 hours of placing it. Please contact our customer support team for assistance.\n");
+        } else if (strstr(question, "contact customer support") != NULL) {
+            printf("Chatbot: You can contact our customer support team via email at support@ecommerce.com.\n");
+        } else {
+            printf("Chatbot: I'm sorry, I don't have an answer for that question. Please try asking something else or type 'help' for assistance.\n");
+        }
+    }
+}
+
+// Function to sort products by price using bubble sort
+void sortProductsByPrice(Product *products, int size) {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - 1 - i; j++) {
+            if (products[j].price > products[j + 1].price) {
+                // Swap the products
+                Product temp = products[j];
+                products[j] = products[j + 1];
+                products[j + 1] = temp;
+            }
+        }
+    }
+    // Print sorted products
+    printf("Chatbot: Products sorted by price:\n");
+    for (int i = 0; i < size; i++) {
+        printf("Name: %s\n", products[i].name);
+        printf("Code: %d\n", products[i].code);
+        printf("Description: %s\n", products[i].description);
+        printf("Price: %.2f\n", products[i].price);
+        printf("Units: %d\n", products[i].units);
+        printf("\n");
+    }
+}
+
+
+
+
+
+//search algorithm
+int counting_product_from_file(char *product_file, product_list* products){
+    FILE *fptr;
+    fptr = fopen(product_file,"r");
+    if (fptr==NULL){
+        printf("Error in loading the products\n");
+        exit(1);
+    }
+    int count = 0;
+    while(fscanf(fptr,"%s %d %s %f %d %s", products[count].product_name, &products[count].product_code, products[count].product_description, &products[count].product_price, &products[count].product_quantity, products[count].last_update)==6){
+        count +=1;
+        
+    }
+    fclose(fptr);
+    return count;
+    
+}
+
+void lowercase_conversion(char user_input[100]){
+    for(int i=0;i<strlen(user_input);i++){
+        user_input[i]=tolower(user_input[i]);   
+    }
+}
+
+//case1
+//same as user input
+void same_as_userinput(product_list products[],int no_of_products, char *user_input, int *case1){
+    for(int i =0 ;i<no_of_products;i++){
+        char k[100];
+        strcpy(k,products[i].product_name);
+        lowercase_conversion(k);
+        if(strstr(k,user_input)!=NULL){
+            *case1 = 1;
+            //printf("match was found");
+            break; //exits the function once match was found
+        }
+    }
+}             
+
+
+//case 2
+//spelling mistakes liks destol
+void spelling_mistake(char *user_input,int no_of_products,product_list products[],int *case2, char corrected_input[100]){
+    int k=strlen(user_input);
+    corrected_input[0] = '\0';// Initialize corrected_input to empty string
+    int min_difference=k+1;//intialize with large difference between input and its matches
+    for(int i=0;i<no_of_products;i++){
+        int len = strlen(products[i].product_name);
+        if (len >= k){
+            
+            for(int j=0; j<=len-k ;j++){
+                char substring[k+1];
+                int differences=0;
+            
+                strncpy(substring, &products[i].product_name[j], k);
+                substring[k]='\0';
+                lowercase_conversion(substring);
+
+                for(int l=0;l<k;l++){
+                
+                    if (substring[l]!=user_input[l]){
+                        differences+=1;
+                    }
+                
+                }
+                int tolerence=k/2;
+                if (differences < tolerence && differences < min_difference){
+                    strcpy(corrected_input,substring);
+                    min_difference= differences;
+                }
+            }
+        }
+    }
+    if (strcmp(corrected_input,user_input)!= 0 && strlen(corrected_input)>0){
+        //we use did you mean output 
+        *case2 = 2;//for switch()
+        //printf("the user input is corrected");
+    }
+    //else{
+       // printf("finding matches for incorrect input was unsuccessful");
+    //}
+}
+
+void switch_function(int *cases, char *user_input,char *corrected_input, int no_of_products, product_list products[]){
+    switch (*cases) {
+        case 1:
+            //a match
+            //printf("A match was found for the input and no correction case1 = 1 case2 =0.\n");
+            printf("The products matching with \"%s\":\n",user_input);
+            printf("-----------------------------------------------------------------\n");
+            printf("%-25s %10s %16s \n","Product name","Price","Quantity");
+            printf("-----------------------------------------------------------------\n");
+            for(int i =0 ;i<no_of_products;i++){
+                char k[100];
+                strcpy(k,products[i].product_name);
+                lowercase_conversion(k);
+                    if(strstr(k,user_input)!=NULL){
+             
+                        printf("%-25s %10.2f %16d \n",products[i].product_name,products[i].product_price,products[i].product_quantity);
+                    }
+    
+            }
+            printf("-----------------------------------------------------------------\n");
+
+            break;
+            
+        case 2:  
+            //printf("no match and the input was corrected case1=0 and case2 = 2.\n");
+            
+            printf("Did you mean \"%s\"?\n",corrected_input);
+            printf("-----------------------------------------------------------------\n");
+            printf("%-25s %10s %16s \n","Product name","Price","Quantity");
+            printf("-----------------------------------------------------------------\n");
+            for(int i =0 ;i<no_of_products;i++){
+                char k[100];
+                strcpy(k,products[i].product_name);
+                lowercase_conversion(k);
+                    if(strstr(k,corrected_input)!=NULL){
+             
+                        printf("%-25s %10.2f %16d \n",products[i].product_name,products[i].product_price,products[i].product_quantity);
+                    }
+    
+            }
+            printf("-----------------------------------------------------------------\n");  
+                        break;
+        case 3:  
+            //printf("match found and the input was corrected case1=1 case2=2.\n");
+            break;
+        case 0:   
+            //printf("No exact match or correction found case1 and case2 =0.\n");
+            printf("Available products\n");
+            printf("-----------------------------------------------------------------\n");
+            printf("%-25s %10s %16s \n","Product name","Price","Quantity");
+            printf("-----------------------------------------------------------------\n");
+            for (int i=0;i<no_of_products;i++){
+                printf("%-25s %10.2f %16d\n",products[i].product_name,products[i].product_price,products[i].product_quantity);
+            }
+            printf("-----------------------------------------------------------------\n");
+            break;
+        default:
+           // printf("Unknown case.\n");
+            break;
+    }
+}
+
+void search(int no_of_products, char *user_input, int *case1, int *case2, int *cases, char *corrected_input, product_list products[]) {
+    lowercase_conversion(user_input);
+
+    same_as_userinput(products, no_of_products, user_input, case1);
+    spelling_mistake(user_input, no_of_products, products, case2, corrected_input);
+
+    *cases = *case1 + *case2;  // Update cases based on the latest values of case1 and case2
+
+    switch_function(cases, user_input, corrected_input, no_of_products, products);
+}
