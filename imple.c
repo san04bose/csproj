@@ -300,9 +300,11 @@ void add_stocks(stocks new_stock) {
     fgets(new_stock.name, sizeof(new_stock.name), stdin);
     new_stock.name[strcspn(new_stock.name, "\n")] = '\0'; // Remove trailing newline
 
-    printf("Enter item code: \n");
-    fgets(new_stock.code, sizeof(new_stock.code), stdin);
-    new_stock.code[strcspn(new_stock.code, "\n")] = '\0'; // Remove trailing newline
+    printf("Enter code of stocks: \n");
+    while (scanf("%d", &new_stock.code) != 1) {
+        printf("Invalid input. Please enter an integer: \n");
+        while (getchar() != '\n'); // Clear the input buffer
+    }// Remove trailing newline
 
     printf("Enter description: \n");
     fgets(new_stock.desc, sizeof(new_stock.desc), stdin);
@@ -344,12 +346,12 @@ void remove_stocks(char item_name[100]){
     FILE *fpt;
     FILE *fp;
     stocks item;
-    fp = fopen("records.dat", "r+");
+    fp = fopen("records.dat", "r");
     if (fp == NULL) {
     perror("Error opening file");
     return;
 }
-    fpt = fopen("temp.dat", "r+");
+    fpt = fopen("temp.dat", "w");
     if (fpt == NULL) {
     perror("Error opening file");
     return;
@@ -365,6 +367,7 @@ void remove_stocks(char item_name[100]){
     fclose(fpt);
     remove("records.dat");
     rename("temp.dat", "records.dat");
+    printf("removed succesfully");
 }
 
     
