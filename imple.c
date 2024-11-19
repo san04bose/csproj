@@ -407,6 +407,7 @@ int add_to_cart(char item_name[20], int units){
     }
     return f;
 } 
+}
 
 
 float buy(){
