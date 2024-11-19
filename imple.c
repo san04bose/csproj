@@ -398,7 +398,9 @@ int add_to_cart(char item_name[20], int units){
             fwrite(&new_item, sizeof(new_item), 1, fpt);
             fclose(fpt);
             f = 1;
-            
+            float tot_price = buy();
+    	    if (tot_price != -1) {
+            bill(tot_price);
                 
         }
         
